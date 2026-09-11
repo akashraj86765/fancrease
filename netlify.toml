@@ -1,0 +1,11 @@
+[build]
+  command = "flutter build web"
+  publish = "build/web"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
