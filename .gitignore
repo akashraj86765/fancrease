@@ -46,3 +46,15 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Local Netlify folder
+.netlify
+
+#API Keys
+.env
+.env.*
+!.env.example
+
+.vscode/
+deno.lock
+.netlify/

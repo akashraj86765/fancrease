@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://fancreaseagency.netlify.app/.netlify/functions/',
+    baseUrl: 'http://localhost:8888/.netlify/functions/',
   ));
 
   Future<List<dynamic>> getServices() async {
