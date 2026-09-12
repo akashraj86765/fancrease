@@ -1,22 +1,36 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ApiService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:8888/.netlify/functions/',
-  ));
-
-  Future<List<dynamic>> getServices() async {
-    final response = await _dio.post('smmProxy', data: {
-      'action': 'services',
-    });
-    return response.data;
+  static String get _baseUrl {
+    if (kDebugMode && kIsWeb) {
+      return 'http://localhost:8888/.netlify/functions/';
+    }
+    if (kDebugMode && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8888/.netlify/functions/';
+    }
+    return 'https://fancreaseagency.netlify.app/.netlify/functions/';
   }
 
-  Future<Map<String, dynamic>> getBalance() async {
-    final response = await _dio.post('smmProxy', data: {
-      'action': 'balance',
-    });
-    return response.data;
+  final Dio _dio = Dio(BaseOptions(baseUrl: _baseUrl));
+
+  Future<Map<String, String>> _authHeaders() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    final token = session?.accessToken ?? '';
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  Future<double> getBalance() async {
+    final response = await _dio.post(
+      'smmProxy',
+      data: {'action': 'balance'},
+      options: Options(headers: await _authHeaders()),
+    );
+    return double.parse(response.data['balance'].toString());
   }
 
   Future<Map<String, dynamic>> addOrder({
@@ -24,12 +38,16 @@ class ApiService {
     required String link,
     required int quantity,
   }) async {
-    final response = await _dio.post('smmProxy', data: {
-      'action': 'add',
-      'service': serviceId,
-      'link': link,
-      'quantity': quantity,
-    });
-    return response.data;
+    final response = await _dio.post(
+      'smmProxy',
+      data: {
+        'action': 'add',
+        'service': serviceId,
+        'link': link,
+        'quantity': quantity,
+      },
+      options: Options(headers: await _authHeaders()),
+    );
+    return Map<String, dynamic>.from(response.data);
   }
 }

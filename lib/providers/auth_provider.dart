@@ -1,43 +1,90 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthProvider extends ChangeNotifier {
-  bool _isLoggedIn = false;
-  String _username = '';
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  bool get isLoggedIn => _isLoggedIn;
-  String get username => _username;
+  User? _user;
+  bool _isLoading = false;
+  String? _error;
+
+  User? get user => _user;
+  bool get isLoggedIn => _user != null;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  String get username =>
+      _user?.userMetadata?['username'] ?? _user?.email?.split('@').first ?? '';
 
   AuthProvider() {
-    _loadSession();
+    _user = _supabase.auth.currentUser;
+    _supabase.auth.onAuthStateChange.listen((data) {
+      _user = data.session?.user;
+      notifyListeners();
+    });
   }
 
-  Future<void> _loadSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    _username = prefs.getString('username') ?? '';
+  Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
-  }
 
-  Future<bool> login(String username, String password) async {
-    // Replace this with real authentication via your backend later
-    if (username.isNotEmpty && password.isNotEmpty) {
-      _isLoggedIn = true;
-      _username = username;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('username', username);
+    try {
+      final response = await _supabase.auth.signInWithPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+      _user = response.user;
+      _isLoading = false;
       notifyListeners();
       return true;
+    } on AuthException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Something went wrong. Please try again.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
-    return false;
+  }
+
+  Future<bool> register({
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _supabase.auth.signUp(
+        email: email.trim(),
+        password: password.trim(),
+        data: {'username': username.trim()},
+      );
+      _user = response.user;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Something went wrong. Please try again.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<void> logout() async {
-    _isLoggedIn = false;
-    _username = '';
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await _supabase.auth.signOut();
+    _user = null;
     notifyListeners();
   }
 }

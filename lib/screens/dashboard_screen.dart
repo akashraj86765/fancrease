@@ -25,13 +25,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadBalance() async {
     try {
       final api = context.read<ApiService>();
-      final data = await api.getBalance();
-      setState(() {
-        _balance = double.tryParse(data['balance'].toString()) ?? 0;
-        _loadingBalance = false;
-      });
+      final balance = await api.getBalance();
+      if (mounted) {
+        setState(() {
+          _balance = balance;
+          _loadingBalance = false;
+        });
+      }
     } catch (e) {
-      setState(() => _loadingBalance = false);
+      if (mounted) {
+        setState(() => _loadingBalance = false);
+      }
     }
   }
 
@@ -54,7 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Balance Card
             Card(
               color: Colors.deepPurple,
               child: Padding(

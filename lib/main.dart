@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'config.dart';
 import 'services/api_service.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: AppConfig.supabaseUrl,
+    anonKey: AppConfig.supabaseAnonKey,
+  );
+
   runApp(const FancreaseApp());
 }
 

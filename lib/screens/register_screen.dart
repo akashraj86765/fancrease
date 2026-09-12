@@ -1,33 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _register() async {
+    if (_usernameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (_passwordController.text.trim().length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
     final auth = context.read<AuthProvider>();
-    final success = await auth.login(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
+    final success = await auth.register(
+      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
     );
-    if (!success && mounted && auth.error != null) {
+
+    if (success && mounted) {
+      Navigator.pop(context);
+    } else if (mounted && auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!), backgroundColor: Colors.red),
       );
@@ -39,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Create Account')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -47,16 +69,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.rocket_launch,
-                    size: 80, color: Colors.deepPurple),
-                const SizedBox(height: 16),
-                const Text(
-                  'Fancrease',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                const Icon(Icons.person_add,
+                    size: 64, color: Colors.deepPurple),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Text('SMM Panel', style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -71,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Password (min 6 chars)',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
                   ),
@@ -81,24 +105,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: auth.isLoading ? null : _login,
+                    onPressed: auth.isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
                       foregroundColor: Colors.white,
                     ),
                     child: auth.isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Login', style: TextStyle(fontSize: 16)),
+                        : const Text('Register',
+                            style: TextStyle(fontSize: 16)),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const RegisterScreen()),
-                  ),
-                  child: const Text("Don't have an account? Register"),
                 ),
               ],
             ),
