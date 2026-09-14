@@ -13,7 +13,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get username =>
-      _user?.userMetadata?['username'] ?? _user?.email?.split('@').first ?? '';
+      _user?.userMetadata?['username'] ??
+      _user?.email?.split('@').first ??
+      '';
 
   AuthProvider() {
     _user = _supabase.auth.currentUser;

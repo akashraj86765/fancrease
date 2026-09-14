@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
+import 'theme.dart';
 import 'services/api_service.dart';
 import 'providers/auth_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
+import 'providers/currency_provider.dart';
+import 'screens/landing_screen.dart';
+import 'screens/app_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,19 +29,12 @@ class FancreaseApp extends StatelessWidget {
       providers: [
         Provider<ApiService>(create: (_) => ApiService()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CurrencyProvider()),
       ],
       child: MaterialApp(
         title: 'Fancrease',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          scaffoldBackgroundColor: const Color(0xFFF5F5F7),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-        ),
+        theme: AppTheme.light(),
         home: const AuthGate(),
       ),
     );
@@ -52,6 +47,6 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    return auth.isLoggedIn ? const DashboardScreen() : const LoginScreen();
+    return auth.isLoggedIn ? const AppShell() : const LandingScreen();
   }
 }
